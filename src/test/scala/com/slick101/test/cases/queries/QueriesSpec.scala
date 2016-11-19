@@ -10,13 +10,21 @@ class QueriesSpec extends BaseTest with ServerDb {
   // tests
   "Students search" must {
     "return at leat 5 students" in {
-      exec(CourseModel.StudentTable.result).map { results =>
+      db.run(CourseModel.StudentTable.result).map { results =>
+        results.length should be >= 5
+      }.futureValue
+
+      db.run(
+        CourseModel.StudentTable.map(student =>
+          (student.name, student.surname)
+        ).result
+      ).map { results =>
         results.length should be >= 5
       }.futureValue
     }
 
     "general query test" in {
-      exec(
+      db.run(
         CourseModel.StudentTable
           .result
       ).map { results =>

@@ -2,7 +2,11 @@ package com.slick101.test.cases.table
 
 import com.slick101.test.{BaseTest, MemDb}
 import org.scalatest.BeforeAndAfterEach
+import slick.dbio
 import slick.jdbc.H2Profile.api._
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class TableSpec extends BaseTest with BeforeAndAfterEach with MemDb {
 
@@ -47,6 +51,32 @@ class TableSpec extends BaseTest with BeforeAndAfterEach with MemDb {
       results.foreach(u => log.debug(s"${u}"))
       results.map(_.name) should contain theSameElementsAs
         Seq("Hogwart", "Scala University")
+    }
+
+    "be insertable - more functional way" in {
+      db.run(for {
+        emptyResults <- UniversityTable.result
+        _ <- UniversityTable ++= Seq(
+              University("Hogwart"),
+              University("Scala University")
+            )
+        nonEmptyResults <- UniversityTable.result
+      } yield {
+        emptyResults should have size 0
+        nonEmptyResults.map(_.name) should contain theSameElementsAs
+          Seq("Hogwart", "Scala University")
+      }).futureValue
+    }
+  }
+
+  "test restrictive signature" in {
+    executeReadOnly(UniversityTable.result)
+//    executeReadOnly(UniversityTable += University("Nice try!"))
+  }
+
+  def executeReadOnly[R, S <: dbio.NoStream](readOnlyOper: DBIOAction[R, S, Effect.Read]): Future[Unit] = {
+    db.run(readOnlyOper).map { results =>
+      log.info(s"Results are: $results")
     }
   }
 }
