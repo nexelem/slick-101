@@ -1,4 +1,4 @@
-import com.slick101.test.cases.queries.CourseModel
+import com.slick101.test.cases.queries.CourseModel._
 import com.slick101.test.{BaseTest, ServerDb}
 import slick.jdbc.H2Profile.api._
 
@@ -25,21 +25,19 @@ class QueriesSpec extends BaseTest with ServerDb {
 
     "general query test" in {
       db.run(
-        CourseModel.StudentTable
+        StudentTable
           .result
       ).map { results =>
         log.info(s"\n${results.mkString("\n")}")
         results.length should be > 0
       }.futureValue
     }
+  }
 
-//    "general update/delete" in {
-//      exec(
-//
-//      ).map { results =>
-//        log.info(s"\n${results}")
-//        results should be >= 0
-//      }.futureValue
-//    }
+  "Different queries" must {
+    "filtering results" in {
+      StudentTable filter(_.name === "")
+        .result
+    }
   }
 }
