@@ -32,6 +32,20 @@ class TableSpec extends BaseTest with BeforeAndAfterEach with MemDb {
 
   // tear down schema
   override protected def afterEach {
+    DBIO.seq(
+      UniversityTable ++= Seq(
+        University("Hogwart"),
+        University("Scala University")
+      ),
+      UniversityTable ++= Seq(
+        University("Hogwart"),
+        University("Scala University")
+      ),
+      UniversityTable ++= Seq(
+        University("Hogwart"),
+        University("Scala University")
+      )
+    )
     blockingWait(db.run(UniversityTable.schema.drop))
   }
 

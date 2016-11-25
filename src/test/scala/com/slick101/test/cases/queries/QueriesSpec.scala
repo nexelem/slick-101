@@ -159,5 +159,16 @@ class QueriesSpec extends BaseTest with ServerDb {
         .map(s => (s.name, s.surname))
         .distinctOn(_._1)
     )
+
+    log.info("=== Group by")
+    querySync(
+      StudentTable
+        .filter(_.surname =!= "Test")
+        .groupBy(_.surname)
+        .map { case (surname, group) =>
+          (surname, group.map(_.name).countDistinct)
+        }
+        .filter(row => row._2 > 5)
+    )
   }
 }
