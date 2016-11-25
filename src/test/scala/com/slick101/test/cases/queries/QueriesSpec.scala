@@ -1,21 +1,26 @@
 import com.slick101.test.cases.queries.CourseModel._
 import com.slick101.test.{BaseTest, ServerDb}
 import slick.jdbc.H2Profile.api._
+import slick.lifted
+import slick.lifted.Functions._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+
+// show general scheme of executing query (db.run, result)
+// show grouping by
 
 class QueriesSpec extends BaseTest with ServerDb {
 
 
   // tests
   "Students search" must {
-    "return at leat 5 students" in {
-      db.run(CourseModel.StudentTable.result).map { results =>
+    "return at least 5 students" in {
+      db.run(StudentTable.result).map { results =>
         results.length should be >= 5
       }.futureValue
 
       db.run(
-        CourseModel.StudentTable.map(student =>
+        StudentTable.map(student =>
           (student.name, student.surname)
         ).result
       ).map { results =>
@@ -34,10 +39,115 @@ class QueriesSpec extends BaseTest with ServerDb {
     }
   }
 
-  "Different queries" must {
-    "filtering results" in {
-      StudentTable filter(_.name === "")
-        .result
+  "various tests" must {
+    "generate queries" in {
+      simpleSelect
+      projections
+      filtering
+      otherQueries
     }
+  }
+
+  def simpleSelect: Unit = {
+    log.info("=== Simple select")
+    querySync(
+      StudentTable
+    )
+
+    log.info("=== Simple select / for-comprehension")
+    querySync(
+      for {student <- StudentTable }
+        yield student
+    )
+  }
+
+  def projections: Unit = {
+    log.info("=== Simple select with projection")
+    querySync(
+      StudentTable
+        .map(_.name)
+    )
+
+    log.info("=== Multiple mapping")
+    querySync(
+      StudentTable
+        .map(_.nationality)
+        .map(_.toUpperCase)
+        .map(nat => nat ++ "!")
+        .map(nat => (nat, currentTime, pi))
+    )
+
+    log.info("=== Simple select with more complicated projection")
+    querySync(
+      StudentTable
+        .sortBy(_.name)
+        .map(s => (s.name, s.middleName.ifNull("*no-middlename*")))
+    )
+  }
+
+  def filtering {
+    log.info("=== Select with filter")
+    querySync(
+      StudentTable.filter(_.name === "Tom")
+    )
+
+    log.info("=== Select with filter / for-comprehension")
+    querySync(
+      (for {
+        student <- StudentTable if student.name === "Tom"
+      } yield student)
+    )
+
+    log.info("=== Select with more filters")
+    querySync(
+      StudentTable
+        .filterNot(student => student.name === "Tom" && student.surname.startsWith("Smi"))
+    )
+
+    log.info("=== Select with sorting")
+    querySync(
+      StudentTable
+        .filter(student => student.middleName.nonEmpty)
+        .sortBy(_.name)
+    )
+
+    log.info("=== Select more complicated sorting")
+    querySync(
+      StudentTable
+        .filter(student => student.middleName.nonEmpty)
+        .sortBy(s => (s.name.desc, s.middleName.asc))
+    )
+
+    log.info("=== Select more distinct")
+    querySync(
+      StudentTable
+        .map(_.name)
+        .distinct
+    )
+  }
+
+  def otherQueries: Unit = {
+    log.info("=== Select limit / offset")
+    querySync(
+      StudentTable
+        .map(s => (s.name, s.surname))
+        .drop(2)
+        .take(3)
+    )
+
+    log.info("=== Select limit / offset (reversed order)")
+    querySync(
+      StudentTable
+        .map(s => (s.name, s.surname))
+        .take(3)
+        .drop(2)
+    )
+
+    log.info("=== Interesting distinct")
+    querySync(
+      StudentTable
+        .map(s => (s.name, s.surname))
+        .distinctOn(_._1)
+    )
   }
 }

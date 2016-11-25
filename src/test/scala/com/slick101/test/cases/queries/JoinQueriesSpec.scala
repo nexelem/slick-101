@@ -55,4 +55,13 @@ class JoinQueriesSpec extends BaseTest with ServerDb {
       }).futureValue
     }
   }
+
+  "various other queries" should {
+    "work nice too" in {
+      querySync(
+        DocumentTable
+          .joinLeft(StudentTable).on(_.studentId === _.id)
+      )
+    }
+  }
 }

@@ -26,13 +26,13 @@ object CourseModel {
   lazy val StudentTable = TableQuery[StudentTable]
 
   // document
-  case class Document(studentId: Id[Student],
+  case class Document(studentId: Option[Id[Student]],
                       name: String,
                       uuid: String,
                       id: Id[Document] = Id.none)
 
   class DocumentTable(tag: Tag) extends Table[Document](tag, "DOCUMENT") {
-    def studentId = column[Id[Student]]("STUDENTID")
+    def studentId = column[Option[Id[Student]]]("STUDENT_ID")
     def name = column[String]("NAME")
     def uuid = column[String]("UUID")
     def id = column[Id[Document]]("ID", O.PrimaryKey, O.AutoInc)
