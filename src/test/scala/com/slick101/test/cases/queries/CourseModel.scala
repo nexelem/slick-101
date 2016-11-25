@@ -39,7 +39,7 @@ object CourseModel {
 
     def * = (studentId, name, uuid, id) <> (Document.tupled, Document.unapply)
 
-    def student = foreignKey("fk_document_student", studentId, StudentTable)(_.id)
+    def student = foreignKey("fk_document_student", studentId, StudentTable)(_.id.?)
   }
 
   lazy val DocumentTable = TableQuery[DocumentTable]

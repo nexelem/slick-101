@@ -3,6 +3,7 @@ import com.slick101.test.{BaseTest, ServerDb}
 import slick.jdbc.H2Profile.api._
 import slick.lifted
 import slick.lifted.Functions._
+import com.slick101.test.cases.conversation.TypesafeId._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -71,10 +72,11 @@ class QueriesSpec extends BaseTest with ServerDb {
     log.info("=== Multiple mapping")
     querySync(
       StudentTable
-        .map(_.nationality)
+        .map(nat => nat.nationality ++ "  ")
         .map(_.toUpperCase)
-        .map(nat => nat ++ "!")
-        .map(nat => (nat, currentTime, pi))
+        .map(_.trim)
+        .map((_, currentTime, pi))
+        .map(row => row._1 ++ " " ++ row._2.asColumnOf[String] ++ " " ++ row._3.asColumnOf[String])
     )
 
     log.info("=== Simple select with more complicated projection")
@@ -82,6 +84,13 @@ class QueriesSpec extends BaseTest with ServerDb {
       StudentTable
         .sortBy(_.name)
         .map(s => (s.name, s.middleName.ifNull("*no-middlename*")))
+    )
+
+    log.info("=== Simple select with more complicated projection (reversed order)")
+    querySync(
+      StudentTable
+        .map(s => (s.name, s.middleName.ifNull("*no-middlename*")))
+        .sortBy(_._1)
     )
   }
 
@@ -116,6 +125,7 @@ class QueriesSpec extends BaseTest with ServerDb {
       StudentTable
         .filter(student => student.middleName.nonEmpty)
         .sortBy(s => (s.name.desc, s.middleName.asc))
+        .distinct
     )
 
     log.info("=== Select more distinct")

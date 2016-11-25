@@ -8,7 +8,7 @@ version := "1.0-SNAPSHOT"
 scalaVersion := "2.12.0-M5"
 
 // no more lame code
-scalacOptions ++= Seq("-Xfatal-warnings", "-feature")
+scalacOptions ++= Seq("-Xfatal-warnings", "-feature", "-deprecation")
 
 
 libraryDependencies ++= {
